@@ -24,7 +24,7 @@ class Actor(models.Model):
 
 
 class Movie(models.Model):
-    title = models.CharField(max_length=255)
+    title = models.CharField(max_length=255, db_index=True)
     description = models.TextField()
     actors = models.ManyToManyField(to=Actor, related_name="movies")
     genres = models.ManyToManyField(to=Genre, related_name="movies")
@@ -60,9 +60,11 @@ class MovieSession(models.Model):
 
 
 class Order(models.Model):
-    created_at = (models.DateTimeField(auto_now_add=True))
+    created_at = models.DateTimeField(auto_now_add=True)
     user = (models.ForeignKey
-            (settings.AUTH_USER_MODEL, on_delete=models.CASCADE))
+            (settings.AUTH_USER_MODEL,
+             on_delete=models.CASCADE,
+             related_name="orders"))
 
     class Meta:
         ordering = ["-created_at"]
@@ -72,8 +74,13 @@ class Order(models.Model):
 
 
 class Ticket(models.Model):
-    movie_session = models.ForeignKey("MovieSession", on_delete=models.CASCADE)
-    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    movie_session = (models.ForeignKey
+                     ("MovieSession",
+                      on_delete=models.CASCADE,
+                      related_name="tickets"))
+    order = (models.ForeignKey
+             (Order, on_delete=models.CASCADE,
+              related_name="tickets"))
     row = models.IntegerField()
     seat = models.IntegerField()
 
@@ -87,9 +94,10 @@ class Ticket(models.Model):
 
     def __str__(self) -> str:
         movie_title = self.movie_session.movie.title
-        show_time = self.movie_session.show_time.strftime("%Y-%m-%d %H:%M:%S")
-        return (f"{movie_title} {show_time} (row: {self.row}, "
-                f"seat: {self.seat})")
+        show_time = (self.movie_session.show_time.strftime
+                     ("%Y-%m-%d %H:%M:%S"))
+        return (f"{movie_title} {show_time} (row: {self.row}, seat: "
+                f"{self.seat})")
 
     def clean(self) -> None:
         hall = self.movie_session.cinema_hall
