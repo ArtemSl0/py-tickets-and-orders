@@ -7,7 +7,7 @@ User = get_user_model()
 
 
 @transaction.atomic
-def create_order(tickets: list, username: str, date: str = None):
+def create_order(tickets: list, username: str, date: str = None) -> Order:
     user = User.objects.get(username=username)
     order = Order.objects.create(user=user)
 
